@@ -15,29 +15,27 @@ from itertools import izip
 from scipy.sparse import coo_matrix
 
 def main(argv):
+	global path = './map_pickles'
     query = argv[0]
 
-    map = getMap()
-    top = getTopFrequencies(map)
-
-def getMap():
-	path = './map_pickles'
-	full = {}
+    full = {}
 	for filename in os.listdir(path):
-		temp = pickle.load(open(path + '/' + filename, 'rb'))
-                i = 0
-		for specialty in temp:
-                    i += 1
-                    if specialty not in full:
-                        full[specialty] = temp[specialty]
-                    else:
-                        full[specialty] += " "
-                        full[specialty] += temp[specialty]
+    	print filename
+    	map = getMap(filename)
+    	freqDict = getTopFrequencies(map)
+    	full = mergeFreq(full, freqDict)
+    print full
 
-#                    if i == 20:
-#                        break
-	print len(full)
-        return full
+def mergeFreq(full, new):
+	for specialty in new:
+		if specialty not in full:
+			full[specialty] = new[specialty]
+		else:
+			full[specialty] += new[specialty]
+	return full
+
+def getMap(filename):
+	return pickle.load(open(path + '/' + filename, 'rb'))
 
 def getTopFrequencies(map):
     #stopwords = corpus.stopwords.words('english')
@@ -45,21 +43,19 @@ def getTopFrequencies(map):
     tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
     tfs = tfidf.fit_transform([ v.lower().translate(None, string.punctuation) for v in map.values()])
 
+    freqDict = {}
     for specialty in map:
         response = tfidf.transform([map[specialty]])
         feature_names = tfidf.get_feature_names()
-        print specialty
+        # print specialty
 
         featDict = []
         for col in response.nonzero()[1]:
             featDict.append((feature_names[col], response[0,col]))
 
-        print nlargest(20, featDict, key=lambda e:e[1])
-        print ''
+        freqDict[specialty] = nlargest(20, featDict, key=lambda e:e[1])
 
-def sort_matrix(m):
-    tuples = izip(m.row, m.col, m.data)
-    return sorted(tuples, key=lambda x: (x[2], x[2]))
+    return freqDict
 
 def tokenize(text):
     tokens = nltk.word_tokenize(text)
@@ -67,9 +63,3 @@ def tokenize(text):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
-#        allWords = nltk.tokenize.word_tokenize(map[specialty])
-#        allWordDist = nltk.FreqDist(w.lower() for w in allWords)
-#        allWordExceptStopDist = nltk.FreqDist(w.lower() for w in allWords if w not in stopwords) 
-#        mostCommon= allWordExceptStopDist.most_common(10)
-
