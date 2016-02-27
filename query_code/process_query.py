@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from nltk.stem.porter import PorterStemmer
 from heapq import nlargest
 import pickle
 import sys
@@ -32,8 +33,9 @@ def getMap():
                     else:
                         full[specialty] += " "
                         full[specialty] += temp[specialty]
-                    if i == 15:
-                        break
+
+#                    if i == 20:
+#                        break
 	print len(full)
         return full
 
@@ -41,13 +43,8 @@ def getTopFrequencies(map):
     #stopwords = corpus.stopwords.words('english')
 
     tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
-    token_dict = {}
-    #for specialty in map:
-     #   map[specialty].lower().translate(None, string.punctuation)
-    print 'start fit'
+    tfs = tfidf.fit_transform([ v.lower().translate(None, string.punctuation) for v in map.values()])
 
-    tfs = tfidf.fit_transform(map.values())
-    print 'fit done'
     for specialty in map:
         response = tfidf.transform([map[specialty]])
         feature_names = tfidf.get_feature_names()
@@ -66,18 +63,13 @@ def sort_matrix(m):
 
 def tokenize(text):
     tokens = nltk.word_tokenize(text)
-#    stems = []
-#    for item in tokens:
-#        stems.append(PorterStemmer().stem(item))
     return tokens
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
 
 #        allWords = nltk.tokenize.word_tokenize(map[specialty])
 #        allWordDist = nltk.FreqDist(w.lower() for w in allWords)
 #        allWordExceptStopDist = nltk.FreqDist(w.lower() for w in allWords if w not in stopwords) 
 #        mostCommon= allWordExceptStopDist.most_common(10)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
-
 
