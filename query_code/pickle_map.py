@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import MySQLdb
 import pickle
+import string
 
 db = MySQLdb.connect(host="localhost",    # your host, usually localhost
                      user="root",         # your username
@@ -9,7 +10,7 @@ db = MySQLdb.connect(host="localhost",    # your host, usually localhost
 
 cur = db.cursor()
 
-cur.execute("SELECT p.specialty, s.descrip FROM providers p, services s where p.npi=s.npi order by p.npi asc limit 1000000, 1000000")
+cur.execute("SELECT p.specialty, s.descrip FROM providers p, services s where p.npi=s.npi order by p.npi asc limit 1500000, 500000")
 
 print 'selection done'
 
@@ -20,10 +21,10 @@ for row in cur.fetchall():
         print row[0]
     else:
         map[row[0].upper()] += " "
-        map[row[0].upper()] += row[1]
+        map[row[0].upper()] += row[1].lower().translate(None, string.punctuation).translate(None, string.digits)
 print len(map)
 #for specialty in map:
 #    print specialty + " " + map[specialty]
-pickle.dump(map, open('dat2.p', 'wb'))
+pickle.dump(map, open('dat5000004.p', 'wb'))
 
 db.close()

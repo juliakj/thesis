@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from nltk.stem.porter import PorterStemmer
+from difflib import SequenceMatcher
 from heapq import nlargest
 import pickle
 import sys
@@ -13,53 +14,57 @@ import itertools
 from operator import itemgetter
 from itertools import izip
 from scipy.sparse import coo_matrix
+from nltk.stem import *
+
 
 def main(argv):
-	global path = './map_pickles'
     query = argv[0]
+    results = process(query)
+    for r in results:
+        print r
 
-    full = {}
-	for filename in os.listdir(path):
-    	print filename
-    	map = getMap(filename)
-    	freqDict = getTopFrequencies(map)
-    	full = mergeFreq(full, freqDict)
-    print full
+def process(query):
+    
+    types = []
 
-def mergeFreq(full, new):
-	for specialty in new:
-		if specialty not in full:
-			full[specialty] = new[specialty]
-		else:
-			full[specialty] += new[specialty]
-	return full
+    map = pickle.load(open('fullMap.p', 'rb'))
+    types = getSpecialties(map, query)
+    return sorted(types.items(), key=itemgetter(1), reverse=True)
+        
 
-def getMap(filename):
-	return pickle.load(open(path + '/' + filename, 'rb'))
+def getSpecialties(map, query):
+    types = {}
+    stemmer = SnowballStemmer("english")
 
-def getTopFrequencies(map):
-    #stopwords = corpus.stopwords.words('english')
+    for spec in map:
+        for q in query.split():
+            if isMatch(spec.lower(), q.lower()):
+#                print 'type match ' + spec
+                types[spec] = 1
+        for feat in map[spec]:
+            for q in query.split():
+                if isMatch(feat[0].lower(), q.lower()):
+                    if spec not in types:
+                        types[spec] = feat[1]
+                    else:
+                        types[spec] += feat[1]
+    return types
 
-    tfidf = TfidfVectorizer(tokenizer=tokenize, stop_words='english')
-    tfs = tfidf.fit_transform([ v.lower().translate(None, string.punctuation) for v in map.values()])
+def isMatch(s, query):
+    stemmer = SnowballStemmer("english")
+    l = [stemmer.stem(w) for w in s.split()]
+    q = stemmer.stem(query)
+    if s.find(q) != -1 or string.join(l).find(q) != -1 or isSimilar(q, s):
+        return True
+    if s.find(query) != -1 or string.join(l).find(query) != -1 or isSimilar(query, s):
+        return True
+    for w in s.split():
+        if isSimilar(w, query) or isSimilar(w, q):
+            return True
+    return False
 
-    freqDict = {}
-    for specialty in map:
-        response = tfidf.transform([map[specialty]])
-        feature_names = tfidf.get_feature_names()
-        # print specialty
-
-        featDict = []
-        for col in response.nonzero()[1]:
-            featDict.append((feature_names[col], response[0,col]))
-
-        freqDict[specialty] = nlargest(20, featDict, key=lambda e:e[1])
-
-    return freqDict
-
-def tokenize(text):
-    tokens = nltk.word_tokenize(text)
-    return tokens
+def isSimilar(a, b):
+    return SequenceMatcher(None, a, b).ratio() > 0.75    
 
 if __name__ == "__main__":
     main(sys.argv[1:])
