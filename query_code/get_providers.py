@@ -12,16 +12,55 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import string
 import itertools
 from operator import itemgetter
-from itertools import izip
-from scipy.sparse import coo_matrix
-from nltk.stem import *
 import process_query
+import MySQLdb
+
 
 def main(argv):
     query = argv[0]
+    state = argv[1]
     results = process_query.process(query)
-    for r in results:
-        print r
+    print results
+    providers = getBySpecialty(results)
+    filtered = filterByState(state, providers)
+    # need to rank by quality and give option to rank by cost
+    print 'relevant providers found = ' + str(len(providers))
+    print 'relevant providers found in state = ' + str(len(filtered))
+
+
+def filterByState(state, providers):
+    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                        user="root",         # your username
+                        passwd="Galdorhavens0!",  # your password
+                        db="db")        # name of the data base
+    cur = db.cursor()
+    filtered = {}
+    for p in providers:
+        cmd = "SELECT the_state from locations where npi=\'" + str(p) + "\'"
+        cur.execute(cmd)
+        if cur.fetchall()[0][0] == state:
+            filtered[p] = providers[p]
+            filtered[p].append(state)
+#            print filtered[p]
+    return filtered
+
+
+def getBySpecialty(spec):
+    providers = {}
+    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                     user="root",         # your username
+                     passwd="Galdorhavens0!",  # your password
+                     db="db")        # name of the data base
+
+    cur = db.cursor()
+
+    for s in spec:
+        cmd = "SELECT npi, specialty from providers where specialty=\'" + s[0] + "\'"
+        print cmd
+        cur.execute(cmd)
+        for row in cur.fetchall():
+            providers[row[0]] = [row[1], s[1]]
+    return providers
 
 
 if __name__ == "__main__":
