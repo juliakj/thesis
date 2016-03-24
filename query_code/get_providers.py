@@ -14,7 +14,7 @@ import itertools
 from operator import itemgetter
 import process_query
 import MySQLdb
-
+import networkx as nx
 
 def main(argv):
     query = argv[0]
@@ -23,9 +23,24 @@ def main(argv):
     print results
     providers = getBySpecialty(results)
     filtered = filterByState(state, providers)
+#    influence = getInDegree(filtered) # very slow!
     # need to rank by quality and give option to rank by cost
     print 'relevant providers found = ' + str(len(providers))
     print 'relevant providers found in state = ' + str(len(filtered))
+
+
+def getInDegree(providers):
+    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                     user="root",         # your username
+                     passwd="Galdorhavens0!",  # your password
+                     db="db")        # name of the data base
+
+    cur = db.cursor()
+
+    for p in providers:
+        cmd = "SELECT count(*) from referrals where npi2=\'" + str(p) + "\'"
+        cur.execute(cmd)
+        print str(p) + " " + str(cur.fetchall()[0])
 
 
 def filterByState(state, providers):
