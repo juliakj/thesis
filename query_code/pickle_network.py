@@ -2,28 +2,45 @@
 import MySQLdb
 import pickle
 import string
+import sys
+import operator
 
-db = MySQLdb.connect(host="localhost",    # your host, usually localhost
-                     user="root",         # your username
-                     passwd="Galdorhavens0!",  # your password
-                     db="db")        # name of the data base
+def main(args):
+	start = args[0]
+	num = args[1]
 
-cur = db.cursor()
+	db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+	                     user="root",         # your username
+	                     passwd="Galdorhavens0!",  # your password
+	                     db="db")        # name of the data base
 
-cur.execute("SELECT * FROM referrals limit 1500000, 500000") # start, end
+	cur = db.cursor()
 
-print 'selection done'
+	cmd = "SELECT * FROM referrals limit " + str(start) + ", " + str(num) #1500000, 500000"
+	cur.execute(cmd)
 
-map = {}
-for row in cur.fetchall():
-    if row[0].upper() not in map:
-        map[row[0].upper()] = row[1]
-        print row[0]
-    else:
-        map[row[0].upper()] += " "
-        map[row[0].upper()] += row[1].lower().translate(None, string.punctuation).translate(None, string.digits)
-print len(map)
+	print 'selection done'
 
-pickle.dump(map, open('dat5000004.p', 'wb'))
+	map = {}
+	for row in cur.fetchall():
+	    if row[0] not in map:
+	    	map[row[0]] = (0, 0)
+	    if row[1] not in map:
+	    	map[row[1]] = (0, 0)
 
-db.close()
+	    map[row[0]] = tuple(map(operator.add, map[row[0]], (1,row[2])))
+	    map[row[1]] = tuple(map(operator.add, map[row[1]], (1,row[2])))
+	      	
+	print len(map)
+
+	for p in map:
+		print str(p) + " : "
+		print map[p]
+
+	name = "dat" + str(start) + "-" + str(start+num) + ".p"
+	pickle.dump(map, open(name, 'wb'))
+
+	db.close()
+
+if __name__ == "__main__":
+ 	main(sys.argv[1:])
