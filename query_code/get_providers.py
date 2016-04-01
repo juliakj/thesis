@@ -16,32 +16,48 @@ import process_query
 import MySQLdb
 import networkx as nx
 
-def main(argv):
+
+
+def get(argv):
+
+
+
     query = argv[0]
     state = argv[1]
     results = process_query.process(query)
     print results
     providers = getBySpecialty(results)
     filtered = filterByState(state, providers)
-#    influence = getInDegree(filtered) # very slow!
+    influence = getInDegree(filtered)
     # need to rank by quality and give option to rank by cost
     print 'relevant providers found = ' + str(len(providers))
     print 'relevant providers found in state = ' + str(len(filtered))
 
 
+    print 'top 20 of all:'
+
+    i = 0
+    while i < 5:
+        print influence[i]
+        i += 1
+
+
+    return influence
+
 def getInDegree(providers):
-    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
-                     user="root",         # your username
-                     passwd="Galdorhavens0!",  # your password
-                     db="db")        # name of the data base
+#    print providers
+    data = pickle.load(open('/home/ubuntu/mygit/query_code/fullNetMap.p', 'rb'))
 
-    cur = db.cursor()
-
+    res = {}
     for p in providers:
-        cmd = "SELECT count(*) from referrals where npi2=\'" + str(p) + "\'"
-        cur.execute(cmd)
-        print str(p) + " " + str(cur.fetchall()[0])
-
+        if p in data:
+            res[p] = providers[p] + [data[p][0], data[p][1]]
+            print res[p]
+#    sorted_res = sorted(res.items(), key=itemgetter(4)*itemgetter(2), reverse=True)
+    sorted_res = sorted(res.items(), key=lambda (k, v): v[1]*v[3], reverse=True)
+#    for s in sorted_res:
+#        print s
+    return sorted_res
 
 def filterByState(state, providers):
     db = MySQLdb.connect(host="localhost",    # your host, usually localhost
@@ -79,4 +95,4 @@ def getBySpecialty(spec):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    get(sys.argv[1:])
