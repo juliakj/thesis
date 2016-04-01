@@ -20,7 +20,18 @@ import networkx as nx
 
 def get(argv):
 
+    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                        user="root",         # your username
+                        passwd="Galdorhavens0!",  # your password
+                        db="db")        # name of the data base
+    cur = db.cursor()
+    cmd = "SELECT * from violations"
+    cur.execute(cmd)
+    a = cur.fetchall()
+    b = []
+    return b
 
+    # testing to see if sql breaks!
 
     query = argv[0]
     state = argv[1]
