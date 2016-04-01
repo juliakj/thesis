@@ -30,6 +30,7 @@ def get(argv, cursor):
     filtered = filterByState(state, providers, cursor)
     influence = getInDegree(filtered)
     # need to rank by quality and give option to rank by cost
+    '''
     print 'relevant providers found = ' + str(len(providers))
     print 'relevant providers found in state = ' + str(len(filtered))
 
@@ -41,7 +42,7 @@ def get(argv, cursor):
         print influence[i]
         i += 1
 
-
+    '''
     return influence
 
 def getInDegree(providers):
@@ -54,7 +55,7 @@ def getInDegree(providers):
             res[p] = providers[p] + [data[p][0], data[p][1]]
             print res[p]
 #    sorted_res = sorted(res.items(), key=itemgetter(4)*itemgetter(2), reverse=True)
-    sorted_res = sorted(res.items(), key=lambda (k, v): v[1]*v[3], reverse=True)
+    sorted_res = sorted(res.items(), key=lambda (k, v): v[1]*v[4], reverse=True)
 #    for s in sorted_res:
 #        print s
     return sorted_res
@@ -75,11 +76,12 @@ def getBySpecialty(spec, cur):
     providers = {}
 
     for s in spec:
-        cmd = "SELECT npi, specialty from providers where specialty=\'" + s[0] + "\'"
+        cmd = "SELECT npi, specialty, firstname, lastname from providers where specialty=\'" + s[0] + "\'"
         print cmd
         cur.execute(cmd)
         for row in cur.fetchall():
-            providers[row[0]] = [row[1], s[1]]
+            name = row[2] + row[3]
+            providers[row[0]] = [row[1], s[1], name] # also get the name
     return providers
 
 
