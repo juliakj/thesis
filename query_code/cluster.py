@@ -20,20 +20,19 @@ import networkx as nx
 
 
 def main():
+    npis = getData()
+    print len(npis)
+    print len(set(npis))
 
 
-
-def getData(i):
+def getData():
     db = MySQLdb.connect(host="localhost",    # your host, usually localhost
                          user="root",         # your username
                          passwd="Galdorhavens0!",  # your password
                          db="db")        # name of the data base
     cur = db.cursor()
-    if i == 0:
-        offset = ''
-    else:
-        offset = str(i) + ', '
-    cur.execute("SELECT * FROM referrals limit " + offset + "500000")
+
+    cur.execute("SELECT npi FROM violations")
 
     return cur.fetchall()
         
