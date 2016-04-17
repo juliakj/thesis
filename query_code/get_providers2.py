@@ -19,27 +19,22 @@ import networkx as nx
 
 
 def get(argv):
-    '''
-    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
-                        user="root",         # your username
-                        passwd="Galdorhavens0!",  # your password
-                        db="db")        # name of the data base
-    cur = db.cursor()
-    cmd = "SELECT * from violations"
-    cur.execute(cmd)
-    a = cur.fetchall()
-    '''
-   # cursor.execute("SELECT * from violations")
-   # data = cursor.fetchall()
-
-    #return data
-
-    # testing to see if sql breaks!
 
     query = argv[0]
     state = argv[1]
+
+
     results = process_query.process(query)
     print results
+
+    # get by specialty and state
+
+    # rank by quality measures
+
+    providers = getSubset(results)
+    print providers
+    sys.exit()
+
     providers = getBySpecialty(results)
     filtered = filterByState(state, providers)
     influence = getInDegree(filtered)
@@ -106,6 +101,31 @@ def getBySpecialty(spec):
         for row in cur.fetchall():
             providers[row[0]] = [row[1], s[1]]
     return providers
+
+
+def getSubset(spec, state):
+    providers = {}
+    db = MySQLdb.connect(host="localhost",    # your host, usually localhost
+                     user="root",         # your username
+                     passwd="Galdorhavens0!",  # your password
+                     db="db")        # name of the data base
+
+    cur = db.cursor()
+
+    types = "( specialty = \'" + spec[0][0] + "\'"
+    for e in spec[1:]:
+        types += " OR specialty = \'" + e[0] + "\'"
+
+    types += ")"
+    
+    cmd "SELECT npi, exp, qual, price, specialty, the_name from filters where the_state = \'" + state + "\' " + types
+    print cmd
+    cur.execute(cmd)
+
+    for row in cur.fetchall():
+        providers[row[0]] = row[1:]
+    return providers
+
 
 
 if __name__ == "__main__":
