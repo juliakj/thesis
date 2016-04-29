@@ -67,7 +67,7 @@ def filterByState(state, providers, cur):
         cur.execute(cmd)
         if cur.fetchall()[0][0] == state:
             filtered[p] = providers[p]
-            filtered[p].append(state)
+            filtered[p].append(str(state))
 #            print filtered[p]
     return filtered
 
@@ -80,8 +80,8 @@ def getBySpecialty(spec, cur):
         print cmd
         cur.execute(cmd)
         for row in cur.fetchall():
-            name = row[2] + row[3]
-            providers[row[0]] = [row[1], s[1], name] # also get the name
+            name = row[2] + " " + row[3]
+            providers[row[0]] = [str(row[1]), s[1], str(name)] # also get the name
     return providers
 
 
